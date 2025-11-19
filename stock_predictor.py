@@ -23,7 +23,11 @@ FEATURES = [
     'daily_range',
     'candle_direction',
     'high_to_close',
-    'low_to_close'
+    'low_to_close',
+    'pct_change_lag1',
+    'pct_change_lag2',
+    'rsi_lag1',
+    'candle_direction_lag1'
 ]
 
 # --- DATA FETCHING ---
@@ -77,6 +81,7 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     """
     Creates technical analysis features for the model, including open/high/low data.
     """
+    # 1. Close-based features
     df['pct_change'] = df['close'].pct_change()
 
     df['ma_short'] = df['close'].rolling(window=ma_short).mean()
@@ -92,6 +97,7 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     rs = gain / loss
     df['rsi'] = 100 - (100 / (1 + rs))
     
+    # 2. Open/High/Low-based features
     df['daily_range'] = df['high'] - df['low']
     
     df['candle_direction'] = (df['close'] > df['open']).astype(int)
@@ -103,6 +109,14 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['low_to_close'] = (df['close'] - df['low']) / safe_daily_range
     
     df.replace([np.inf, -np.inf], 0, inplace=True)
+    
+    df['pct_change_lag1'] = df['pct_change'].shift(1)
+    df['pct_change_lag2'] = df['pct_change'].shift(2)
+    
+    df['rsi_lag1'] = df['rsi'].shift(1)
+    
+    df['candle_direction_lag1'] = df['candle_direction'].shift(1)
+    
     
     # --- TARGET VARIABLE ---
     df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
