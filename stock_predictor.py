@@ -117,7 +117,6 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     
     df['candle_direction_lag1'] = df['candle_direction'].shift(1)
     
-    
     # --- TARGET VARIABLE ---
     df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
 
