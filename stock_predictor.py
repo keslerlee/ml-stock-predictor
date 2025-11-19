@@ -10,7 +10,7 @@ from sklearn.metrics import classification_report, accuracy_score
 
 BASE_URL = "https://api.twelvedata.com/time_series"
 
-TRAIN_TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'JPM']
+TRAIN_TICKERS = ['AAPL', 'MSFT', 'GOOGL']
 TEST_TICKERS = ['AMZN', 'TSLA', 'NVDA']
 
 FEATURES = [
