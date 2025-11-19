@@ -1,12 +1,13 @@
 import requests
 import pandas as pd
 import numpy as np
+import os 
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
 
 # --- CONFIGURATION ---
 
-API_KEY = ""
 BASE_URL = "https://api.twelvedata.com/time_series"
 
 TRAIN_TICKERS = ['AAPL', 'MSFT', 'GOOGL', 'JPM']
@@ -18,17 +19,25 @@ FEATURES = [
     'rsi', 
     'roc', 
     'volatility',
-    'pct_change'
+    'pct_change',
+    'daily_range',
+    'candle_direction',
+    'high_to_close',
+    'low_to_close'
 ]
 
 # --- DATA FETCHING ---
 
-def get_stock_data(symbol, interval='1day', output_size=5000):
+def get_stock_data(symbol, api_key, interval='1day', output_size=5000):
+    """
+    Fetches historical stock data from the Twelve Data API.
+    Now requires the api_key to be passed as an argument.
+    """
     print(f"Fetching data for {symbol}...")
     params = {
         'symbol': symbol,
         'interval': interval,
-        'apikey': API_KEY,
+        'apikey': api_key,
         'outputsize': output_size,
         'format': 'JSON'
     }
@@ -38,8 +47,8 @@ def get_stock_data(symbol, interval='1day', output_size=5000):
         
         data = response.json()
         
-        if data['status'] == 'error':
-            print(f"Error fetching data for {symbol}: {data['message']}")
+        if data.get('status') == 'error':
+            print(f"Error fetching data for {symbol}: {data.get('message', 'Unknown error')}")
             return None
             
         df = pd.DataFrame(data['values'])
@@ -65,6 +74,9 @@ def get_stock_data(symbol, interval='1day', output_size=5000):
 # --- FEATURE ENGINEERING ---
 
 def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
+    """
+    Creates technical analysis features for the model, including open/high/low data.
+    """
     df['pct_change'] = df['close'].pct_change()
 
     df['ma_short'] = df['close'].rolling(window=ma_short).mean()
@@ -79,22 +91,36 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     loss = (-delta.where(delta < 0, 0)).rolling(window=rsi_period).mean()
     rs = gain / loss
     df['rsi'] = 100 - (100 / (1 + rs))
-
+    
+    df['daily_range'] = df['high'] - df['low']
+    
+    df['candle_direction'] = (df['close'] > df['open']).astype(int)
+    
+    safe_daily_range = df['daily_range'].apply(lambda x: max(x, 1e-9)) 
+    
+    df['high_to_close'] = (df['high'] - df['close']) / safe_daily_range
+    
+    df['low_to_close'] = (df['close'] - df['low']) / safe_daily_range
+    
+    df.replace([np.inf, -np.inf], 0, inplace=True)
+    
     # --- TARGET VARIABLE ---
-    # We want to predict if the *next* day's close is higher than the current day's close.
-    # 1 = Price went Up, 0 = Price went Down or Stayed Same
     df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
 
     return df
 
 # --- MODEL TRAINING ---
 
-def train_model():
+def train_model(api_key):
+    """
+    Fetches data for training tickers, engineers features, 
+    and trains a RandomForestClassifier.
+    """
     print("--- Starting Model Training ---")
     all_train_data = []
     
     for ticker in TRAIN_TICKERS:
-        data = get_stock_data(ticker)
+        data = get_stock_data(ticker, api_key) 
         if data is not None:
             features_df = create_features(data)
             all_train_data.append(features_df)
@@ -111,7 +137,6 @@ def train_model():
         print("No valid training data after processing. Exiting.")
         return None
 
-    # Define our features (X) and target (y)
     X_train = train_df[FEATURES]
     y_train = train_df['target']
     
@@ -142,7 +167,10 @@ def train_model():
 
 # --- MODEL TESTING ---
 
-def test_model(model):
+def test_model(model, api_key):
+    """
+    Tests the trained model on a separate set of tickers.
+    """
     if model is None:
         print("No model to test.")
         return
@@ -151,7 +179,7 @@ def test_model(model):
     
     for ticker in TEST_TICKERS:
         print(f"\n--- Evaluating: {ticker} ---")
-        test_data = get_stock_data(ticker)
+        test_data = get_stock_data(ticker, api_key) 
         
         if test_data is None:
             continue
@@ -183,19 +211,38 @@ def test_model(model):
 
 # --- MAIN EXECUTION ---
 
+def load_api_key_from_env():
+    """Reads the API key from the .env file."""
+    try:
+        with open('.env', 'r') as f:
+            for line in f:
+                if line.strip().startswith('API_KEY='):
+                    key = line.strip().split('=', 1)[1].strip().strip('"')
+                    if key and key != "YOUR_API_KEY":
+                        return key
+    except FileNotFoundError:
+        return None 
+    except Exception as e:
+        print(f"An error occurred while reading the .env file: {e}")
+        return None
+
+    return "YOUR_API_KEY" 
+
 def main():
     print("===== Stock Market Prediction Model =====")
     
-    if API_KEY == "YOUR_API_KEY":
+    api_key = load_api_key_from_env()
+
+    if api_key is None or api_key == "YOUR_API_KEY":
         print("=" * 40)
-        print("ERROR: Please replace 'YOUR_API_KEY' in the script")
-        print("       with your actual API key from twelvedata.com")
+        print("ERROR: API key not found.")
+        print("       Please create a .env file and add your API key.")
         print("=" * 40)
         return
 
-    model = train_model()
+    model = train_model(api_key)
     
-    test_model(model)
+    test_model(model, api_key)
 
 if __name__ == "__main__":
     main()
