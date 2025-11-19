@@ -33,10 +33,6 @@ FEATURES = [
 # --- DATA FETCHING ---
 
 def get_stock_data(symbol, api_key, interval='1day', output_size=5000):
-    """
-    Fetches historical stock data from the Twelve Data API.
-    Now requires the api_key to be passed as an argument.
-    """
     print(f"Fetching data for {symbol}...")
     params = {
         'symbol': symbol,
@@ -78,9 +74,6 @@ def get_stock_data(symbol, api_key, interval='1day', output_size=5000):
 # --- FEATURE ENGINEERING ---
 
 def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
-    """
-    Creates technical analysis features for the model, including open/high/low data.
-    """
     # 1. Close-based features
     df['pct_change'] = df['close'].pct_change()
 
@@ -125,10 +118,6 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
 # --- MODEL TRAINING ---
 
 def train_model(api_key):
-    """
-    Fetches data for training tickers, engineers features, 
-    and trains a RandomForestClassifier.
-    """
     print("--- Starting Model Training ---")
     all_train_data = []
     
@@ -181,9 +170,6 @@ def train_model(api_key):
 # --- MODEL TESTING ---
 
 def test_model(model, api_key):
-    """
-    Tests the trained model on a separate set of tickers.
-    """
     if model is None:
         print("No model to test.")
         return
@@ -225,7 +211,6 @@ def test_model(model, api_key):
 # --- MAIN EXECUTION ---
 
 def load_api_key_from_env():
-    """Reads the API key from the .env file."""
     try:
         with open('.env', 'r') as f:
             for line in f:
