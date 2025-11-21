@@ -33,10 +33,14 @@ FEATURES = [
     'pct_change_lag2',
     'pct_change_lag5',
     'pct_change_lag10',
+    'pct_change_lag20',
+    'pct_change_lag30',
     'rsi_lag1',
     'rsi_lag2',
     'rsi_lag5',
     'rsi_lag10',
+    'rsi_lag20',
+    'rsi_lag30',
     'candle_direction_lag1'
 ]
 
@@ -121,10 +125,14 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['pct_change_lag2'] = df['pct_change'].shift(2)
     df['pct_change_lag5'] = df['pct_change'].shift(5)
     df['pct_change_lag10'] = df['pct_change'].shift(10)
+    df['pct_change_lag20'] = df['pct_change'].shift(20)
+    df['pct_change_lag30'] = df['pct_change'].shift(30)
     df['rsi_lag1'] = df['rsi'].shift(1)
     df['rsi_lag2'] = df['rsi'].shift(2)
     df['rsi_lag5'] = df['rsi'].shift(5)
     df['rsi_lag10'] = df['rsi'].shift(10)
+    df['rsi_lag20'] = df['rsi'].shift(20)
+    df['rsi_lag30'] = df['rsi'].shift(30)
     df['candle_direction_lag1'] = df['candle_direction'].shift(1)
 
     # --- TARGET VARIABLE ---
