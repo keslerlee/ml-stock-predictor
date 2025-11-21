@@ -44,7 +44,10 @@ FEATURES = [
     'candle_direction_lag1',
     'macd',
     'macd_signal',
-    'macd_hist'
+    'macd_hist',
+    'bb_upper',
+    'bb_middle',
+    'bb_lower'
 ]
 
 # --- DATA FETCHING ---
@@ -130,6 +133,13 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['macd_signal'] = df['macd'].ewm(span=9, adjust=False).mean()
     df['macd_hist'] = df['macd'] - df['macd_signal']
 
+    window = 20
+    df['bb_middle'] = df['close'].rolling(window=window).mean()
+    df['bb_std'] = df['close'].rolling(window=window).std()
+    df['bb_upper'] = df['bb_middle'] + (df['bb_std'] * 2)
+    df['bb_lower'] = df['bb_middle'] - (df['bb_std'] * 2)
+    df.drop(columns=['bb_std'], inplace=True)
+    
     df['pct_change_lag1'] = df['pct_change'].shift(1)
     df['pct_change_lag2'] = df['pct_change'].shift(2)
     df['pct_change_lag5'] = df['pct_change'].shift(5)
