@@ -1,2 +1,2 @@
 # ml-stock-predictor
-A simple Machine Learning project to try to predict the stock market.
+This is a machine learning project designed to predict the short-term movement of stocks using historical price data and technical analysis indicators. It uses a Random Forest Classifier as a baseline model. The model achieves a small but statistically significant edge, consistently performing $\approx 2\%$ above the $50\%$ random chance baseline on unseen data. While this model is not designed for real trading, it serves as a good starting point for exploring predictive modeling in financial markets.
