@@ -41,7 +41,10 @@ FEATURES = [
     'rsi_lag10',
     'rsi_lag20',
     'rsi_lag30',
-    'candle_direction_lag1'
+    'candle_direction_lag1',
+    'macd',
+    'macd_signal',
+    'macd_hist'
 ]
 
 # --- DATA FETCHING ---
@@ -120,6 +123,12 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['high_to_close'] = (df['high'] - df['close']) / df['high']
     df['low_to_close'] = (df['close'] - df['low']) / df['low']
     df.replace([np.inf, -np.inf], 0, inplace=True)
+
+    ema_12 = df['close'].ewm(span=12, adjust=False).mean()
+    ema_26 = df['close'].ewm(span=26, adjust=False).mean()
+    df['macd'] = ema_12 - ema_26
+    df['macd_signal'] = df['macd'].ewm(span=9, adjust=False).mean()
+    df['macd_hist'] = df['macd'] - df['macd_signal']
 
     df['pct_change_lag1'] = df['pct_change'].shift(1)
     df['pct_change_lag2'] = df['pct_change'].shift(2)
