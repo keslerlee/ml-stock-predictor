@@ -8,7 +8,7 @@ import time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
 
-# --- CONFIGURATION ---
+# Configuration
 
 BASE_URL = "https://api.twelvedata.com/time_series"
 
@@ -50,7 +50,7 @@ FEATURES = [
     'bb_lower'
 ]
 
-# --- DATA FETCHING ---
+# Data Fetching
 
 def get_stock_data(symbol, api_key, interval='1day', output_size=5000):
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -105,7 +105,7 @@ def get_stock_data(symbol, api_key, interval='1day', output_size=5000):
         print(f"API Error for {symbol}: {e}")
         return pd.DataFrame()
 
-# --- FEATURE ENGINEERING ---
+# Features
 
 def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['pct_change'] = df['close'].pct_change()
@@ -154,13 +154,13 @@ def create_features(df, rsi_period=14, roc_period=20, ma_short=10, ma_long=50):
     df['rsi_lag30'] = df['rsi'].shift(30)
     df['candle_direction_lag1'] = df['candle_direction'].shift(1)
 
-    # --- TARGET VARIABLE ---
+    # Target Variable
     df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
 
     df.dropna(inplace=True)
     return df
 
-# --- MODEL TRAINING ---
+# Training
 
 def train_model(api_key):
     print("--- Starting Model Training ---")
@@ -186,7 +186,7 @@ def train_model(api_key):
     print("Model training complete.")
     return model
 
-# --- MODEL TESTING ---
+# Testing
 
 def test_model(model, api_key):
     if model is None:
@@ -215,7 +215,7 @@ def test_model(model, api_key):
         print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
         print(classification_report(y_test, y_pred, zero_division=0))
 
-# --- MAIN EXECUTION ---
+# Main Function
 
 def load_api_key_from_env():
     try:
